@@ -1531,8 +1531,9 @@ def reduce_logsumexp(input_tensor,
                      axis=None,
                      keep_dims=False,
                      name=None,
-                     reduction_indices=None):
-  """Computes log(sum(exp(elements across dimensions of a tensor))).
+                     reduction_indices=None,
+                     weight_tensor=None):
+  """Computes log(sum(weight * exp(elements across dimensions of a tensor))).
 
   Reduces `input_tensor` along the dimensions given in `axis`.
   Unless `keep_dims` is true, the rank of the tensor is reduced by 1 for each
@@ -1542,9 +1543,9 @@ def reduce_logsumexp(input_tensor,
   If `axis` has no entries, all dimensions are reduced, and a
   tensor with a single element is returned.
 
-  This function is more numerically stable than log(sum(exp(input))). It avoids
-  overflows caused by taking the exp of large inputs and underflows caused by
-  taking the log of small inputs.
+  This function is more numerically stable than log(sum(weight *exp(input))).
+  It avoids overflows caused by taking the exp of large inputs and underflows
+  caused by taking the log of small inputs.
 
   For example:
 
@@ -1565,6 +1566,8 @@ def reduce_logsumexp(input_tensor,
     keep_dims: If true, retains reduced dimensions with length 1.
     name: A name for the operation (optional).
     reduction_indices: The old (deprecated) name for axis.
+    weight_tensor: A tensor of weights which should have numeric
+      type if not `None`. If `None` a unit weight is applied.
 
   Returns:
     The reduced tensor.
@@ -1576,12 +1579,20 @@ def reduce_logsumexp(input_tensor,
             axis=axis,
             reduction_indices=reduction_indices,
             keep_dims=True))
-    result = gen_math_ops.log(
-        reduce_sum(
-            gen_math_ops.exp(input_tensor - my_max),
-            axis,
-            keep_dims=True,
-            reduction_indices=reduction_indices)) + my_max
+    if weight_tensor is None:
+      result = gen_math_ops.log(
+          reduce_sum(
+              gen_math_ops.exp(input_tensor - my_max),
+              axis,
+              keep_dims=True,
+              reduction_indices=reduction_indices)) + my_max
+    else:
+      result = gen_math_ops.log(
+          reduce_sum(weight_tensor *
+              gen_math_ops.exp(input_tensor - my_max),
+              axis,
+              keep_dims=True,
+              reduction_indices=reduction_indices)) + my_max
     if not keep_dims:
       if isinstance(axis, int):
         axis = [axis]

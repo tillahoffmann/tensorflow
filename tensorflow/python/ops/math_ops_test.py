@@ -68,6 +68,15 @@ class LogSumExpTest(test_util.TensorFlowTestCase):
         y_np = log(np.sum(exp(x_np)))
         self.assertAllClose(y_tf_np, y_np)
 
+  def testReduceLogSumExpWeighted(self):
+    for dtype in [np.float16, np.float32, np.double]:
+      x_np = np.random.rand(5, 5).astype(dtype)
+      w_np = np.random.rand(5, 5).astype(dtype)
+      with self.test_session(use_gpu=True):
+        y_tf_np = math_ops.reduce_logsumexp(x_np, weight_tensor=w_np).eval()
+        y_np = log(np.sum(w_np * exp(x_np)))
+        self.assertAllClose(y_tf_np, y_np)
+
   def testReductionIndices(self):
     for dtype in [np.float16, np.float32, np.double]:
       x_np = np.random.rand(5, 5).astype(dtype)
