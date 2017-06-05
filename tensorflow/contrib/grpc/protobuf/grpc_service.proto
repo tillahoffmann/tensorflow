@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "tensorflow/core/example/example.proto";
+
+service GrpcService {
+    rpc GetBytes(BinaryMessage) returns (BinaryMessage);
+    rpc GetExample(BinaryMessage) returns (Example);
+}
+
+message BinaryMessage {
+    bytes payload = 1;
+}
